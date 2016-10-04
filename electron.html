@@ -1,0 +1,270 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Carge in the E&B fields</title>
+</head>
+
+ <script>
+ 
+ 	var dt = 0.001, maxTime = 5000, axs = 1; keyE = 1, scale = 50;
+ 	var Bx = 0, By = 0, Bz = 1, Ex = -0.2*keyE, Ey = 0*keyE; Ez = 0*keyE, charge = -1;
+ 	var x = 0.5001, y = 0, z = 0;
+ 	var vx = 0; vy = 1; vz = 0.2;
+ 	
+ 	var solXYZ, solVelXYZ, sMin, sMax, sol;
+ 	
+ 	function initialise() {
+ 		Ex = -0.2*keyE, Ey = 0*keyE; Ez = 0*keyE;
+ 		solXYZ = new Array();
+		solVelXYZ = new Array();
+		sMin = new Array();
+		sMax  = new Array();
+	
+ 		sMin[0] = x;
+	 	sMin[1] = y;
+	 	sMax[0] = x;
+ 		sMax[1] = y;
+ 		sMin[2] = z;
+ 		sMax[2] = z;
+ 		
+ 		calckSol();
+ 	}
+ 	
+ 	var canvas, context
+ 	
+ 	var colHead = 40, rowHead = 40, margin = 15;
+ 	
+ 	function drawSol() {
+ 		canvas = document.getElementById('cnv');
+ 		context = canvas.getContext('2d');
+ 		
+ 		initialise();
+ 		
+ 		draw2D(sMin[0], sMin[axs], sMax[0], sMax[axs]);
+ 		draw3D();
+ 		//drawXZ(MinX, MinZ, MaxX, MaxZ);
+ 		
+ 		
+	}
+	
+	function calckSol() {
+		
+		var i = 3;
+		
+		
+		solXYZ[0] = x;
+		solXYZ[1] = y;
+		solXYZ[2] = z;
+		solVelXYZ[0] = vx;
+		solVelXYZ[1] = vy;
+		solVelXYZ[2] = vz;
+		
+		while (i<=maxTime*3){
+			solVelXYZ[i + 0] = solVelXYZ[i - 3] + charge*(solVelXYZ[i - 2]*Bz - solVelXYZ[i - 1]*By + Ex)*dt;
+			solVelXYZ[i + 1] = solVelXYZ[i - 2] + charge*(solVelXYZ[i - 1]*Bx - solVelXYZ[i - 3]*Bz + Ey)*dt;
+			solVelXYZ[i + 2] = solVelXYZ[i - 1] + charge*(solVelXYZ[i - 3]*By - solVelXYZ[i - 2]*Bx + Ez)*dt;
+			
+			solXYZ[i + 0] = solXYZ[i - 3] + (solVelXYZ[i + 0] + solVelXYZ[i - 3])/2*dt;
+			solXYZ[i + 1] = solXYZ[i - 2] + (solVelXYZ[i + 1] + solVelXYZ[i - 2])/2*dt;
+			solXYZ[i + 2] = solXYZ[i - 1] + (solVelXYZ[i + 2] + solVelXYZ[i - 1])/2*dt;
+			
+			for (var j = 0; j < 3; j++) {
+				if (solXYZ[i + j] < sMin[j]) {
+					sMin[j] = solXYZ[i + j];
+				}
+				if (solXYZ[i + j] > sMax[j]) {
+					sMax[j] = solXYZ[i + j];
+				}
+			} 
+			
+ 			i += 3;
+ 		}
+	}
+ 	
+ 	function draw2D(xMin, yMin, xMax, yMax) {
+ 		
+ 		xMin = Math.floor(4*xMin)/4;
+		yMin = Math.floor(4*yMin)/4;
+		xMax = Math.ceil(4*xMax)/4;
+		yMax = Math.ceil(4*yMax)/4;
+		
+		if (yMax==yMin) {
+			yMax++;
+			yMin--
+		}
+		
+		var yScalar = (canvas.height - 2*colHead) / (yMax - yMin);
+		var xScalar = (canvas.width/2 - 2*rowHead) / (xMax - xMin);
+		
+ 		context.strokeStyle = "rgba(128,128,255, 0.5)";
+		context.lineWidth = 1;
+		
+		drawGrig(xMin, yMin, xMax, yMax, 0.25, 0.25, 0);
+		
+		var i = 3;
+ 		var x0 = rowHead - xMin*xScalar, y0 = canvas.height - colHead + yMin*yScalar;
+
+
+ 		context.beginPath();
+ 		context.moveTo(x0 + solXYZ[0]*xScalar, y0 - solXYZ[axs]*yScalar);
+ 		
+ 		 while (i<=maxTime*3){
+ 			context.lineTo(x0 + solXYZ[i]*xScalar, y0 - solXYZ[i + axs]*yScalar);
+ 			i += 3;
+ 		} 
+ 
+ 		context.lineWidth = 2;
+ 		context.strokeStyle = '000077';
+ 		
+ 		context.stroke();
+ 	}
+ 	
+ 	function draw3D() {
+ 		var i = 3, shift = -30;
+ 		
+ 		context.beginPath();
+ 		context.strokeStyle = "rgba(128,128,255, 0.5)";
+ 		context.lineWidth = 1;
+ 		context.moveTo(3*canvas.width/4, canvas.height - colHead);
+ 		context.lineTo(3*canvas.width/4, colHead - shift);
+ 		context.moveTo(3*canvas.width/4, canvas.height/2 - shift);
+ 		context.lineTo(canvas.width - rowHead, canvas.height/2 + 0.577*(canvas.width/4 - rowHead) - shift);
+ 		context.moveTo(3*canvas.width/4, canvas.height/2 - shift);
+ 		context.lineTo(canvas.width/2 + rowHead, canvas.height/2 + 0.577*(canvas.width/4 - rowHead) - shift);
+ 		context.stroke(); 
+ 		
+ 		context.beginPath();
+ 		context.moveTo(3*canvas.width/4 + (solXYZ[1] - solXYZ[0])*0.886*scale, canvas.height/2 - (solXYZ[2] - 0.5*solXYZ[0] - 0.5*solXYZ[1])*scale - shift);
+ 		
+ 		while (i<=maxTime*3){
+ 			context.lineTo(3*canvas.width/4 + (solXYZ[i+1] - solXYZ[i+0])*0.886*scale, canvas.height/2 - (solXYZ[i+2] - 0.5*solXYZ[i+0] - 0.5*solXYZ[i+1])*scale - shift);
+ 			i += 3;
+ 		}
+ 		
+ 
+ 		context.lineWidth = 2;
+ 		context.strokeStyle = 'ff0000';
+ 		
+ 		context.stroke(); 
+ 		context.clearRect(canvas.width/2,0, canvas.width,rowHead, 99);
+ 		context.fillText('Z', 3*canvas.width/4,30 - shift);
+ 		context.fillText('X', canvas.width/2 + 0.7*rowHead, canvas.height/2 + 0.577*(canvas.width/4 - 0.7*rowHead) - shift);
+ 		context.fillText('Y', canvas.width - 0.8*rowHead, canvas.height/2 + 0.577*(canvas.width/4 - 0.7*rowHead) - shift);
+ 	}
+ 
+ 	
+ 	function drawGrig(xMin, yMin, xMax, yMax, stepX, stepY, position) {
+	    
+	    
+	    var yScalar = (canvas.height - 2*colHead) / (yMax - yMin);
+		var xScalar = (canvas.width/2 - 2*rowHead) / (xMax - xMin);
+		
+		context.beginPath();
+	    for (count=0;count<=Math.ceil((yMax-yMin)/stepY);count++) {
+	        var y = colHead + (yScalar * count * stepY);
+			context.fillText(yMax - count * stepY, position*canvas.width/2 + margin,y);
+	        context.moveTo(position*canvas.width/2 + rowHead,y)
+	        context.lineTo((1 + position)*canvas.width/2 - rowHead,y)
+	    }
+	    
+		for (count=0;count<=Math.ceil((xMax-xMin)/stepX);count++) {
+	        var x = position*canvas.width/2 + rowHead + (xScalar * count * stepX);
+			context.fillText(xMin + count * stepX, x - margin/2,canvas.height - 1.5*margin);
+	        context.moveTo(x,colHead)
+	        context.lineTo(x, canvas.height - colHead)
+	    }
+		context.stroke();
+ 	}
+ 	
+ 	
+ 	function showN() {
+		context.clearRect(0,0, canvas.width,canvas.height, 99);
+	    drawSol();
+	}
+ 	
+ 	function incr() {
+    	if (scale<100) {
+    		scale += 5;
+    		}
+    	showN();
+	}
+	 
+	function decr() {
+	    if (scale>10) {
+    		scale -=5;
+    		}
+	    showN();
+	}
+	
+	function setAx() {
+    axs = Math.round(axes.value);
+    showN();
+	}
+	
+	function setEKey() {
+    keyE = Math.round(EKey.value);
+    showN();
+	}
+
+	function setTime() {
+    maxTime = 1000*Math.round(time.value);
+    showN();
+	}
+	
+	function setVel() {
+    vz = Math.round(vel.value*10)/10;
+    showN();
+	}
+ 	
+ </script>
+
+<body onload="drawSol()">
+<div align = "center">
+<h2>The Motion of the electric charge in Electromagnetic field</h2>
+<font size = 3>
+<i>Maximum time:
+<select id="time" onchange="setTime()">
+  <option value=5> 5 s</option>
+  <option value=10> 10 s</option>
+  <option value=15> 15 s</option>
+</select>
+
+&nbsp; Charge's velocity: v<sub>x</sub> = 0; v<sub>y</sub> = 1 m/s;
+v<sub>z</sub> = <select id="vel" onchange="setVel()">
+  <option value=0.2> 0.2 m/s</option>
+  <option value=0> 0 </option>
+  <option value=-0.2> -0.2 m/s </option>
+</select>
+
+&nbsp; Electric field: 
+<select id="EKey" onchange="setEKey()">
+  <option value=1> On </option>
+  <option value=0> Off </option>
+</select>
+
+
+<br />
+<canvas id="cnv" style = "border: 0px solid;" width="800" height="400">
+</canvas>
+<br />
+<table width="800" border="0">
+<tr>
+<td style="width:400px;text-align:center;"> 2D Axes: 
+<select id="axes" onchange="setAx()">
+  <option value=1> XY </option>
+  <option value=2> XZ </option>
+</select>
+</td>
+<td style="text-align:center;"> 3D Scale Factor: </i>
+<input type="button" value=" + " onclick="incr()">
+<input type="button" value=" - " onclick="decr()">
+</td>
+</tr>
+</table>
+<br />
+<font size = 4>
+<b> Fig. 1.</b> .
+</div>
+</body>
+</html>

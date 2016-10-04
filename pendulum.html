@@ -1,0 +1,169 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Pendulum motion</title>
+</head>
+
+ <script>
+ 
+ 	var gamma = 15, dt = 0.1, maxTime = 500, Ampl = 3;
+ 	var canvas, context
+ 	
+ 	var colHead = 40, rowHead = 40, margin = 15;
+ 	
+ 	function drawSol() {
+ 		canvas = document.getElementById('cnv');
+ 		context = canvas.getContext('2d');
+ 		
+ 		drawOscil(0,-Ampl,maxTime*dt,Ampl);
+ 		drawPhase(-Ampl, -Ampl, Ampl, Ampl);
+	}
+ 	
+ 	function drawOscil(xMin, yMin, xMax, yMax) {
+ 		xMin = Math.floor(xMin);
+		yMin = Math.floor(yMin);
+		xMax = Math.ceil(xMax);
+		yMax = Math.ceil(yMax);
+		var yScalar = (canvas.height - 2*colHead) / (yMax - yMin);
+		var xScalar = (canvas.width/2 - 2*rowHead) / (xMax - xMin);
+		
+ 		context.strokeStyle = "rgba(128,128,255, 0.5)";
+		context.lineWidth = 1;
+		var stepTime = 5;
+		
+		drawGrig(xMin, yMin, xMax, yMax, maxTime/100, 0.5, 0);
+		
+		var i = 0, x = Ampl, y = 0;
+ 		var x0 = rowHead, y0 = canvas.height/2;
+
+ 		context.beginPath();
+ 		context.moveTo(x0, y0 - x*yScalar);
+ 		
+ 		while (i<=maxTime){
+ 			y += -Math.sin(x)*dt - y*dt/gamma;
+ 			x += y*dt;
+ 			context.lineTo(x0 + xScalar*i*dt, y0 - x*yScalar);
+ 			i++;
+ 		}
+ 
+ 		context.lineWidth = 2;
+ 		context.strokeStyle = '000077';
+ 		
+ 		context.stroke();
+ 	}
+ 	
+ 	function drawPhase(xMin, yMin, xMax, yMax) {
+ 		xMin = Math.floor(xMin);
+		yMin = Math.floor(yMin);
+		xMax = Math.ceil(xMax);
+		yMax = Math.ceil(yMax);
+		var yScalar = (canvas.height - 2*colHead) / (yMax - yMin);
+		var xScalar = (canvas.width/2 - 2*rowHead) / (xMax - xMin);
+		
+
+		context.strokeStyle = "rgba(128,128,255, 0.5)";
+		context.lineWidth = 1;
+		drawGrig(xMin, yMin, xMax, yMax,0.5,0.5,1);
+
+		var i = 0, x = Ampl, y = 0;
+		var x0 = 3*canvas.width/4, y0 = canvas.height/2;
+
+		context.beginPath();
+ 		context.moveTo(x0 + xScalar*x, y0 - yScalar*y);
+ 		
+ 		while (i<=maxTime){
+ 			y += -Math.sin(x)*dt - y*dt/gamma;
+ 			x += y*dt;
+ 			context.lineTo(x0 + xScalar*x, y0 - yScalar*y);
+ 			i++;
+ 		}
+ 
+ 		context.lineWidth = 2;
+		context.strokeStyle = 'ff0000';		
+ 		context.stroke(); 	
+ 	}
+ 	
+ 	function drawGrig(xMin, yMin, xMax, yMax, stepX, stepY, position) {
+	    
+	    var yScalar = (canvas.height - 2*colHead) / (yMax - yMin);
+		var xScalar = (canvas.width/2 - 2*rowHead) / (xMax - xMin);
+		
+		context.beginPath();
+	    for (count=0;count<=Math.ceil((yMax-yMin)/stepY);count++) {
+	        var y = colHead + (yScalar * count * stepY);
+			context.fillText(yMax - count * stepY, position*canvas.width/2 + margin,y);
+	        context.moveTo(position*canvas.width/2 + rowHead,y)
+	        context.lineTo((1 + position)*canvas.width/2 - rowHead,y)
+	    }
+	    
+		for (count=0;count<=Math.ceil((xMax-xMin)/stepX);count++) {
+	        var x = position*canvas.width/2 + rowHead + (xScalar * count * stepX);
+			context.fillText(xMin + count * stepX, x - margin/2,canvas.height - 1.5*margin);
+	        context.moveTo(x,colHead)
+	        context.lineTo(x, canvas.height - colHead)
+	    }
+		context.stroke();
+ 	}
+ 	
+ 	
+ 	function showN() {
+		context.clearRect(0,0, canvas.width,canvas.height, 99);
+	    drawSol();
+	}
+ 	
+ 	function incr() {
+    	if (gamma>1) {
+    		gamma--;
+    		}
+    	else {
+    		gamma = 0.9*gamma;
+    		}
+    	showN();
+	}
+	 
+	function decr() {
+	    gamma++;
+	    showN();
+	}
+	
+	function setAmpl() {
+    Ampl = Math.round(amplitude.value);
+    showN();
+}
+
+	function setTime() {
+    maxTime = Math.round(time.value);
+    showN();
+}
+ 	
+ </script>
+
+<body onload="drawSol()">
+<div align = "center">
+<h2>The Motion of damped pendulum</h2>
+<font size = 3>
+<i>Maximum time:
+<select id="time" onchange="setTime()">
+  <option value=500> 50 </option>
+  <option value=100> 10 </option>
+  <option value=1000> 100 </option>
+</select>
+&nbsp; Amplidude: 
+<select id="amplitude" onchange="setAmpl()">
+  <option value=3> 3 </option>
+  <option value=2> 2 </option>
+  <option value=1> 1 </option>
+</select>
+&nbsp; Damping factor: </i>
+<input type="button" value=" + " onclick="incr()">
+<input type="button" value=" - " onclick="decr()">
+<br>
+<canvas id="cnv" style = "border: 0px solid;" width="800" height="400">
+</canvas>
+<br>
+<font size = 4>
+<b> Fig. 1.</b> Oscillogram (blue) and phase trajectory (red) of damped pendulum.
+</div>
+</body>
+</html>

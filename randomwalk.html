@@ -1,0 +1,121 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Random Walk</title>
+</head>
+
+<script>
+
+	var canvas, context, steps = 500, walks = 5, stepSize = 10;
+	
+	function rndColor() {
+		var col = Math.round(Math.random()*0xffffff);
+		return 'rgba(' + (col >> 16) + ',' + (col >> 8 & 255) + ',' + (col & 255) + ',0.5)';
+	}
+
+	function drawWalk() {
+		canvas = document.getElementById('cnv');
+ 		context = canvas.getContext('2d');
+ 		
+ 		var h = canvas.height;
+        var w = canvas.width;
+		
+		var path;
+		var averDis = 0;
+		
+		for (i=1; i<=walks; i++) {
+			path = new singlePath(w/2, h/2, stepSize, rndColor());
+			path.drawPath();
+			averDis = (averDis*(i - 1) + path.distance) / i;
+		}
+
+		context.beginPath();
+		context.lineWidth = 2;
+ 		context.strokeStyle = "rgba(28,28,255, 0.8)";
+ 		context.arc(h/2, w/2, averDis, 0, Math.PI*2, false);
+ 		context.stroke();
+ 		
+ 		context.fillText('# of walks:  ' + walks, 10,20);
+ 		context.fillText('average distance:  ' + Math.round(averDis), 10,35);
+ 	}
+ 	
+ 	function singlePath(x0, y0, step, pathColor) {
+ 		
+ 		var i = 0, x = 0, y = 0, phi;
+
+ 		context.beginPath();
+ 		context.moveTo(x0, y0);
+ 		
+ 		while (i<steps){
+ 			phi = Math.random() * Math.PI * 2;
+ 			y += step * Math.sin(phi);
+ 			x += step * Math.cos(phi);
+ 			
+ 			context.lineTo(x0 + x, y0 - y);
+ 			i++;
+ 		}
+ 		
+ 		this.distance = Math.sqrt(x*x + y*y);
+ 		
+ 		this.drawPath = function () {
+ 			context.lineWidth = 1;
+ 			context.strokeStyle = pathColor;
+ 			context.stroke();
+ 		}
+ 	}
+ 	function showPic() {
+		context.clearRect(0,0, canvas.width,canvas.height, 99);
+	    drawWalk();
+	}
+ 	
+ 	function decr() {
+    	if (walks>1) {
+    		walks--;
+    		showPic();
+    		}
+	}
+	 
+	function incr() {
+	    walks++;
+	    showPic();
+	}
+	
+	function setStep() {
+    stepSize = Math.round(steplen.value);
+    showPic();
+	}
+
+	function setTime() {
+    steps = Math.round(time.value);
+    showPic();
+	}
+	
+</script>
+
+<body onload="drawWalk()">
+<div align = "center">
+<h2>Random Walks</h2>
+<font size = 3>
+<i>Maximum steps:
+<select id="time" onchange="setTime()">
+  <option value=500> 500 </option>
+  <option value=200> 200 </option>
+  <option value=100> 100 </option>
+</select>
+&nbsp; Step size:
+<select id="steplen" onchange="setStep()">
+  <option value=10> 10 </option>
+  <option value=5> 5 </option>
+  <option value=2> 2 </option>
+</select>
+&nbsp; Number of walks: </i>
+<input type="button" value=" + " onclick="incr()">
+<input type="button" value=" - " onclick="decr()">
+<br>
+<br>
+<canvas id="cnv" width="500" height="500" style = "border: 1px solid;">
+</canvas>
+</div>
+</body>
+</html>
